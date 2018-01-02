@@ -69,9 +69,13 @@ def validate_config(config):
     expected_values = ['smtp_server', 'smtp_port', 'email_address',
                        'email_password', 'recipients', 'downloads']
     errors = 0
+    if config is None:
+        logging.error("Configuration file is empty or does not exist.")
+        return False
+
     for value in expected_values:
         if value not in config:
-            logging.error("Invalid config: %s does not exist." % value)
+            logging.error("Invalid config: %s is not present." % value)
             errors += 1
     if 'downloads' in config:
         for download in config['downloads']:
