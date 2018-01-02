@@ -4,6 +4,7 @@ setup(
     name='url_checker',
     version='0.1',
     packages=['url_checker'],
+    install_requires=['pyyaml', 'requests'],
     url='https://github.com/kylelaker/url_checker',
     license='MIT',
     author='Kyle Laker',
