@@ -9,5 +9,8 @@ setup(
     license='MIT',
     author='Kyle Laker',
     author_email='lakerka@dukes.jmu.edu',
-    description=''
+    description='Checks if files can be downloaded, emails if they can\'t',
+    entry_points={
+        'console_scripts': ['url_checker = url_checker.url_checker:main']
+    },
 )
