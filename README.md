@@ -1,6 +1,6 @@
 # URL Checker
 
-This project overall is a work in progress; however, the script located in
+`setup.py` is a work in progress; however, the script located in
 `url_checker/url_checker.py` works well enough.
 
 Script used to ensure that a file is accessible. If there is a problem
