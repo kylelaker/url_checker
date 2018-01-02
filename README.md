@@ -4,7 +4,7 @@
 `url_checker/url_checker.py` works well enough.
 
 Script used to ensure that a file is accessible. If there is a problem
-accessing the file, an email is sent a configured list of recipients.
+accessing the file, an email is sent to a configured list of recipients.
 Configuration is stored in `~/.config/url_checker/config.yml`.
 An example config looks like:
 
