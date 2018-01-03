@@ -168,13 +168,14 @@ def main():
         url = download['url']
         name = download['name']
         try:
-            status_code = validate_url(download['url'])
+            status_code = validate_url(url)
         except Exception as e:
             default_status_code = 999
             logging.warning("Unable to get the url for %s. Proceeding and"
                             "reporting status code as %d."
                             % (name, default_status_code), exc_info=e)
             status_code = 999
+
         if status_code != 200:
             errors += 1
             try:
