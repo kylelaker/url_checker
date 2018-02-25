@@ -22,14 +22,9 @@ An example config looks like:
 For the SMTP server and port, only a combination that supports STARTTLS is
 supported. The timeout is given in seconds and is optional; 5 is the default.
 
-
 When checking the URL, if a 3xx is received, the 'Location' in the response
 will be checked. This will be done, at most, 5 times. If a 200 is not
 eventually received, an email will be sent just like for any other failure.
-
-If there is any sort of exception while trying to get the status code, then
-an email will be sent reporting that status code 999 was received.
-Additional information will be logged.
 
 Any issues with the configuration or with sending the email will be logged
 and the script will terminate.
