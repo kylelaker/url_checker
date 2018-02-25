@@ -17,9 +17,11 @@ An example config looks like:
     downloads:
         - name: Software
           url: https://google.com
+    timeout: 5
 
 For the SMTP server and port, only a combination that supports STARTTLS is
-supported. 
+supported. The timeout is given in seconds and is optional; 5 is the default.
+
 
 When checking the URL, if a 3xx is received, the 'Location' in the response
 will be checked. This will be done, at most, 5 times. If a 200 is not

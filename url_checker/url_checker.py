@@ -10,39 +10,10 @@ import requests
 import yaml
 
 """
-    Script used to ensure that a file is accessible. If there is a problem
-    accessing the file, an email is sent a configured list of recipients.
-    Configuration is stored in ~/.config/url_checker/config.yml.
-    An example config looks like:
-
-    smtp_server: server.com
-    smtp_port: 587
-    email_address: user@server.com
-    email_password: hunter2
-    recipients:
-        - user@email.com
-    downloads:
-        - name: Software
-          url: https://google.com
-
-    For the SMTP server and port, only a combination that supports STARTTLS is
-    supported.
-
-    When checking the URL, if a 3xx is received, the 'Location' in the response
-    will be checked. This will be done, at most, 5 times. If a 200 is not
-    eventually received, an email will be sent just like for any other failure.
-
-    If there is any sort of exception while trying to get the status code, then
-    an email will be sent reporting that status code 999 was received.
-    Additional information will be logged.
-
-    Any issues with the configuration or with sending the email will be logged
-    and the script will terminate.
-
-    It probably isn't great to use this script just anywhere because it
-    requires the user's password be stored in plain text on disk and
-    additionally, the password will be floating around in plain text in memory
-    as well.
+A script for ensuring that a file is available. This sends a HEAD request for
+a provided list of URLs and sends and email to a configurable list of
+recipients if any of the URLs return an error status code or if the script
+encounters an exception while trying to send the request.
 """
 
 
@@ -91,11 +62,14 @@ def validate_config(config):
         if len(config['recipients']) < 1:
             logging.error("At least one recipient is required")
             errors += 1
+    if 'timeout' not in config:
+        logging.info("No timeout specified. 5 seconds will be selected.")
+        config['timeout'] = 5
 
     return errors == 0
 
 
-def validate_url(url):
+def validate_url(url, timeout):
     """
     Check a URL and get the status code from a HEAD request. Recursively
     check 3xx responses up to 5 times.
@@ -104,7 +78,7 @@ def validate_url(url):
     :return the status code received
     """
 
-    response = requests.head(url)
+    response = requests.head(url, timeout=timeout)
     max_3xx_checks = 5
     checks_for_3xx = 0
     while response.status_code in range(300, 399) \
@@ -170,7 +144,7 @@ def main():
         url = download['url']
         name = download['name']
         try:
-            status_code = validate_url(url)
+            status_code = validate_url(url, config['timeout'])
         except Exception as e:
             default_status_code = 999
             logging.warning("Unable to get the url for %s. Proceeding and"
