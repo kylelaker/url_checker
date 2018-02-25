@@ -4,6 +4,7 @@ import logging
 import os
 import smtplib
 import sys
+import traceback
 from email.message import EmailMessage
 
 import requests
@@ -75,6 +76,7 @@ def validate_url(url, timeout):
     check 3xx responses up to 5 times.
 
     :param url: The URL to check
+    :param timeout: The timeout to use when sending the HEAD request
     :return the status code received
     """
 
@@ -95,15 +97,14 @@ def validate_url(url, timeout):
     return response.status_code
 
 
-def send_email(software, url, status_code, recipients, sender, server, port,
+def send_email(software, body, recipients, sender, server, port,
                password):
     """
     Send an email reporting that a software was not able to be retrieved
     successfully.
 
     :param software: The software that was not found
-    :param url: The URL that did not result in a 200 status code
-    :param status_code: The status code returned
+    :param body: The body of the message to send
     :param recipients: Who to send the email to
     :param sender: Who is sending the message
     :param server: The SMTP server
@@ -113,10 +114,7 @@ def send_email(software, url, status_code, recipients, sender, server, port,
 
     # Prep the message
     msg = EmailMessage()
-    msg_body = ("It does not seem like %s is available. Received a %d response"
-                " when sending a HEAD request."
-                "\n\nURL: %s" % (software, status_code, url))
-    msg.set_content(msg_body)
+    msg.set_content(body)
     msg['Subject'] = "%s unavailable" % software
     msg['From'] = sender
     msg['To'] = ", ".join(recipients)
@@ -138,6 +136,7 @@ def main():
         sys.exit(1)
     if not validate_config(config):
         sys.exit(1)
+    msg_body = None
 
     errors = 0
     for download in config['downloads']:
@@ -145,21 +144,26 @@ def main():
         name = download['name']
         try:
             status_code = validate_url(url, config['timeout'])
+            if status_code != 200:
+                errors += 1
+                msg_body = ("%s may not be available. An HTTP %s status code"
+                            " was received when sending a HEAD request."
+                            "\n\nURL: %s" % (name, status_code, url))
         except Exception as e:
-            default_status_code = 999
-            logging.warning("Unable to get the url for %s. Proceeding and"
-                            "reporting status code as %d."
-                            % (name, default_status_code), exc_info=e)
-            status_code = 999
-
-        if status_code != 200:
             errors += 1
+            msg_body = ("%s may not be available. An exception was encountered"
+                        " while sending a HEAD request to the URL below."
+                        "\n\nURL: %s"
+                        "\n\nException: %s"
+                        % (name, url, traceback.format_exc()))
+
+        if msg_body is not None:
             try:
-                send_email(name, url, status_code, config['recipients'],
+                send_email(name, msg_body, config['recipients'],
                            config['email_address'], config['smtp_server'],
                            config['smtp_port'], config['email_password'])
             except Exception as e:
-                logging.error("Email failed to send for %s" % name, exc_info=e)
+                logging.error("Email failed to send for %s.", name, exc_info=e)
 
     sys.exit(errors)
 
