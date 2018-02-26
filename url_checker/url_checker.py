@@ -86,7 +86,8 @@ def validate_url(url, timeout):
     while response.status_code in range(300, 399) \
             and checks_for_3xx <= max_3xx_checks:
         if 'Location' in response.headers:
-            response = requests.head(response.headers['Location'])
+            response = requests.head(response.headers['Location'],
+                                     timeout=timeout)
             checks_for_3xx += 1
         else:
             # If there is no 'Location' header, exit the loop which will
@@ -136,10 +137,10 @@ def main():
         sys.exit(1)
     if not validate_config(config):
         sys.exit(1)
-    msg_body = None
 
     errors = 0
     for download in config['downloads']:
+        msg_body = None
         url = download['url']
         name = download['name']
         try:
@@ -149,6 +150,9 @@ def main():
                 msg_body = ("%s may not be available. An HTTP %s status code"
                             " was received when sending a HEAD request."
                             "\n\nURL: %s" % (name, status_code, url))
+        # Many sorts of exceptions could theoretically occur while checking the
+        # URL. This may not signify the file is inaccessible, but it's good to
+        # notify just in case.
         except Exception as e:
             errors += 1
             msg_body = ("%s may not be available. An exception was encountered"
@@ -157,6 +161,8 @@ def main():
                         "\n\nException: %s"
                         % (name, url, traceback.format_exc()))
 
+        # If the value is set, some error condition has occurred, so send
+        # the email
         if msg_body is not None:
             try:
                 send_email(name, msg_body, config['recipients'],
