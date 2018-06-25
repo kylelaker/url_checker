@@ -182,6 +182,8 @@ def main():
             logging.info("Sent message: \n\n%s", msg)
         except Exception as e:
             logging.error("Email failed to send for %s.", name, exc_info=e)
+    else:
+        logging.info("No failures.")
 
     sys.exit(errors)
 
