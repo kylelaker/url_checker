@@ -128,8 +128,14 @@ def send_email(software, body, recipients, sender, server, port,
     server.send_message(msg)
     server.quit()
 
+    return msg
+
 
 def main():
+
+    logging.basicConfig(format="%(levelname)s: %(message)s",
+                        level=logging.INFO)
+
     try:
         config = load_config()
     except OSError as e:
@@ -139,37 +145,43 @@ def main():
         sys.exit(1)
 
     errors = 0
+    msgs = []
+    names = []
     for download in config['downloads']:
-        msg_body = None
         url = download['url']
         name = download['name']
         try:
             status_code = validate_url(url, config['timeout'])
             if status_code != 200:
                 errors += 1
-                msg_body = ("%s may not be available. An HTTP %s status code"
+                names.append(name)
+                msgs.append("%s may not be available. An HTTP %s status code"
                             " was received when sending a HEAD request."
-                            "\n\nURL: %s" % (name, status_code, url))
+                            "\nURL: %s" % (name, status_code, url))
         # Many sorts of exceptions could theoretically occur while checking the
         # URL. This may not signify the file is inaccessible, but it's good to
         # notify just in case.
         except Exception as e:
             errors += 1
-            msg_body = ("%s may not be available. An exception was encountered"
+            names.append(name)
+            msgs.append("%s may not be available. An exception was encountered"
                         " while sending a HEAD request to the URL below."
-                        "\n\nURL: %s"
-                        "\n\nException: %s"
+                        "\nURL: %s"
+                        "\nException: %s"
                         % (name, url, traceback.format_exc()))
 
-        # If the value is set, some error condition has occurred, so send
-        # the email
-        if msg_body is not None:
-            try:
-                send_email(name, msg_body, config['recipients'],
-                           config['email_address'], config['smtp_server'],
-                           config['smtp_port'], config['email_password'])
-            except Exception as e:
-                logging.error("Email failed to send for %s.", name, exc_info=e)
+    # If the value is set, some error condition has occurred, so send
+    # the email
+    if msgs:
+        msg_body = "\n\n".join(msgs)
+        subject = ", ".join(names)
+        try:
+            msg = send_email(subject, msg_body, config['recipients'],
+                             config['email_address'], config['smtp_server'],
+                             config['smtp_port'], config['email_password'])
+            logging.info("Sent message: \n\n%s", msg)
+        except Exception as e:
+            logging.error("Email failed to send for %s.", name, exc_info=e)
 
     sys.exit(errors)
 
