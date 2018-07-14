@@ -51,6 +51,7 @@ def validate_config(config):
         if value not in config:
             logging.error("Invalid config: %s is not present." % value)
             errors += 1
+
     if 'downloads' in config:
         for download in config['downloads']:
             if 'url' not in download:
@@ -59,10 +60,12 @@ def validate_config(config):
             if 'name' not in download:
                 logging.error("Invalid config. Download missing name")
                 errors += 1
+
     if 'recipients' in config:
         if len(config['recipients']) < 1:
             logging.error("At least one recipient is required")
             errors += 1
+
     if 'timeout' not in config:
         logging.info("No timeout specified. 5 seconds will be selected.")
         config['timeout'] = 5
@@ -83,8 +86,9 @@ def validate_url(url, timeout):
     response = requests.head(url, timeout=timeout)
     max_3xx_checks = 5
     checks_for_3xx = 0
-    while response.status_code in range(300, 399) \
-            and checks_for_3xx <= max_3xx_checks:
+
+    while (response.status_code in range(300, 399)
+           and checks_for_3xx <= max_3xx_checks):
         if 'Location' in response.headers:
             response = requests.head(response.headers['Location'],
                                      timeout=timeout)
@@ -93,8 +97,10 @@ def validate_url(url, timeout):
             # If there is no 'Location' header, exit the loop which will
             # result in the 3xx status code being returned
             break
+
     if checks_for_3xx >= max_3xx_checks:
         logging.warning("Too many redirects for %s" % url)
+
     return response.status_code
 
 
@@ -111,6 +117,7 @@ def send_email(software, body, recipients, sender, server, port,
     :param server: The SMTP server
     :param port: The port on the SMTP server. An integer is expected
     :param password: The sender's password
+    :returns: The email that was created and hopefully sent
     """
 
     # Prep the message
@@ -132,7 +139,6 @@ def send_email(software, body, recipients, sender, server, port,
 
 
 def main():
-
     logging.basicConfig(format="%(levelname)s: %(message)s",
                         level=logging.INFO)
 
@@ -141,6 +147,7 @@ def main():
     except OSError as e:
         logging.error("Unable to open configuration file.", exc_info=e)
         sys.exit(1)
+
     if not validate_config(config):
         sys.exit(1)
 
@@ -164,7 +171,7 @@ def main():
         except Exception as e:
             errors += 1
             names.append(name)
-            msgs.append("%s may not be available. An exception was encountered"
+            msgs.append("%s may not be available. An exception was raised"
                         " while sending a HEAD request to the URL below."
                         "\nURL: %s"
                         "\nException: %s"
