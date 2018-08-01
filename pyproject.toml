@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "url_checker"
+version = "1.0.0"
+description = "Checks availability of files at URLs"
+authors = ["Kyle Laker <kyle@laker.email>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.5"
+PyYAML = "^3.13"
+requests = "^2.19"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+url-checker = 'url_checker.url_checker:main'

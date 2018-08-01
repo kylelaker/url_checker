@@ -31,3 +31,18 @@ requires the user's password be stored in plain text on disk and
 additionally, the password will be floating around in plain text in memory
 as well.
 
+## Building
+
+Build the project with [poetry](https://github.com/sdispater/poetry).
+
+```
+poetry build
+```
+
+## Installing
+
+Build the project then:
+
+```
+pip install [--user] dist/url_checker-1.0.0.tar.gz
+```
