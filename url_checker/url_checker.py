@@ -9,7 +9,6 @@ from email.message import EmailMessage
 
 import requests
 import yaml
-
 """
 A script for ensuring that a file is available. This sends a HEAD request for
 a provided list of URLs and sends and email to a configurable list of
@@ -24,8 +23,9 @@ def load_config():
     :return: the configuration as a dictionary
     """
 
-    user_config_path = os.path.join(os.environ['HOME'], '.config',
-                                    'url_checker', 'config.yml')
+    user_config_path = os.path.join(
+        os.environ['HOME'], '.config', 'url_checker', 'config.yml'
+    )
     with open(user_config_path, 'r') as config_file:
         config = yaml.load(config_file)
         return config
@@ -40,8 +40,10 @@ def validate_config(config):
     :return: Whether or not the number of errors in the config was 0
     """
 
-    expected_values = ['smtp_server', 'smtp_port', 'email_address',
-                       'email_password', 'recipients', 'downloads']
+    expected_values = [
+        'smtp_server', 'smtp_port', 'email_address', 'email_password',
+        'recipients', 'downloads'
+    ]
     errors = 0
     if config is None:
         logging.error("Configuration file is empty or does not exist.")
@@ -87,11 +89,14 @@ def validate_url(url, timeout):
     max_3xx_checks = 5
     checks_for_3xx = 0
 
-    while (response.status_code in range(300, 399)
-           and checks_for_3xx <= max_3xx_checks):
+    while (
+        response.status_code in range(300, 399)
+        and checks_for_3xx <= max_3xx_checks
+    ):
         if 'Location' in response.headers:
-            response = requests.head(response.headers['Location'],
-                                     timeout=timeout)
+            response = requests.head(
+                response.headers['Location'], timeout=timeout
+            )
             checks_for_3xx += 1
         else:
             # If there is no 'Location' header, exit the loop which will
@@ -104,8 +109,7 @@ def validate_url(url, timeout):
     return response.status_code
 
 
-def send_email(software, body, recipients, sender, server, port,
-               password):
+def send_email(software, body, recipients, sender, server, port, password):
     """
     Send an email reporting that a software was not able to be retrieved
     successfully.
@@ -139,8 +143,9 @@ def send_email(software, body, recipients, sender, server, port,
 
 
 def main():
-    logging.basicConfig(format="%(levelname)s: %(message)s",
-                        level=logging.INFO)
+    logging.basicConfig(
+        format="%(levelname)s: %(message)s", level=logging.INFO
+    )
 
     try:
         config = load_config()
@@ -162,20 +167,23 @@ def main():
             if status_code != 200:
                 errors += 1
                 names.append(name)
-                msgs.append("%s may not be available. An HTTP %s status code"
-                            " was received when sending a HEAD request."
-                            "\nURL: %s" % (name, status_code, url))
+                msgs.append(
+                    "%s may not be available. An HTTP %s status code"
+                    " was received when sending a HEAD request."
+                    "\nURL: %s" % (name, status_code, url)
+                )
         # Many sorts of exceptions could theoretically occur while checking the
         # URL. This may not signify the file is inaccessible, but it's good to
         # notify just in case.
         except Exception as e:
             errors += 1
             names.append(name)
-            msgs.append("%s may not be available. An exception was raised"
-                        " while sending a HEAD request to the URL below."
-                        "\nURL: %s"
-                        "\nException: %s"
-                        % (name, url, traceback.format_exc()))
+            msgs.append(
+                "%s may not be available. An exception was raised"
+                " while sending a HEAD request to the URL below."
+                "\nURL: %s"
+                "\nException: %s" % (name, url, traceback.format_exc())
+            )
 
     # If the value is set, some error condition has occurred, so send
     # the email
@@ -183,9 +191,11 @@ def main():
         msg_body = "\n\n".join(msgs)
         subject = ", ".join(names)
         try:
-            msg = send_email(subject, msg_body, config['recipients'],
-                             config['email_address'], config['smtp_server'],
-                             config['smtp_port'], config['email_password'])
+            msg = send_email(
+                subject, msg_body, config['recipients'],
+                config['email_address'], config['smtp_server'],
+                config['smtp_port'], config['email_password']
+            )
             logging.info("Sent message: \n\n%s", msg)
         except Exception as e:
             logging.error("Email failed to send for %s.", name, exc_info=e)

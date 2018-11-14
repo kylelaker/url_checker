@@ -11,6 +11,7 @@ PyYAML = "^3.13"
 requests = "^2.19"
 
 [tool.poetry.dev-dependencies]
+yapf = "^0.22.0"
 
 [tool.poetry.scripts]
 url-checker = 'url_checker.url_checker:main'
