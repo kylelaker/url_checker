@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""
+A script for ensuring that a file is available. This sends a HEAD request for
+a provided list of URLs and sends and email to a configurable list of
+recipients if any of the URLs return an error status code or if the script
+encounters an exception while trying to send the request.
+"""
 
 import logging
 import os
@@ -9,13 +15,6 @@ from email.message import EmailMessage
 
 import requests
 import yaml
-"""
-A script for ensuring that a file is available. This sends a HEAD request for
-a provided list of URLs and sends and email to a configurable list of
-recipients if any of the URLs return an error status code or if the script
-encounters an exception while trying to send the request.
-"""
-
 
 def load_config():
     """
@@ -75,7 +74,7 @@ def validate_config(config):
     return errors == 0
 
 
-def validate_url(url, timeout):
+def validate_url(url, timeout, user_agent):
     """
     Check a URL and get the status code from a HEAD request. Recursively
     check 3xx responses up to 5 times.
@@ -85,7 +84,10 @@ def validate_url(url, timeout):
     :return the status code received
     """
 
-    response = requests.head(url, timeout=timeout)
+    headers = {
+        'User-Agent': user_agent
+    }
+    response = requests.head(url, timeout=timeout, headers=headers)
     max_3xx_checks = 5
     checks_for_3xx = 0
 
@@ -156,6 +158,11 @@ def main():
     if not validate_config(config):
         sys.exit(1)
 
+    user_agent = config.get('user_agent',
+                            "%s's URL availability checker"
+                            % os.environ['USER']
+                           )
+
     errors = 0
     msgs = []
     names = []
@@ -163,7 +170,7 @@ def main():
         url = download['url']
         name = download['name']
         try:
-            status_code = validate_url(url, config['timeout'])
+            status_code = validate_url(url, config['timeout'], user_agent)
             if status_code != 200:
                 errors += 1
                 names.append(name)
